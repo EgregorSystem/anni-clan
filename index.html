@@ -80,12 +80,13 @@ input,select,textarea{width:100%;background:#0b0e1c;border:1px solid var(--line)
    <button data-v="agents">Агенты</button>
    <button data-v="people">Сотрудники</button>
    <button data-v="tasks">Задачи</button>
+   <button data-v="integrations">Интеграции</button>
    <button data-v="data">Данные</button>
   </nav>
   <div class="who" id="who"></div>
  </header>
  <div id="app"></div>
- <div class="foot">ANNI · Clan OS · самурайский киберпанк · v2 · egregorsystem.github.io/anni-clan</div>
+ <div class="foot">ANNI · Clan OS · самурайский киберпанк · v3 · egregorsystem.github.io/anni-clan</div>
 </div>
 
 <script>
@@ -133,7 +134,7 @@ document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>{document.quer
 let view="dash",sel=null;
 function go(v){view=v;render()}
 function render(){const a=document.getElementById('app');
- a.innerHTML=({dash:vDash,anni:vAnni,hierarchy:vHier,companies:()=>sel?vCompany(sel):vCompanies(),agents:vAgents,people:vPeople,tasks:vTasks,data:vData}[view])();
+ a.innerHTML=({dash:vDash,anni:vAnni,hierarchy:vHier,companies:()=>sel?vCompany(sel):vCompanies(),agents:vAgents,people:vPeople,tasks:vTasks,integrations:vInteg,data:vData}[view])();
  bind(); if(view==="anni")renderChat();}
 
 /* DASHBOARD */
@@ -201,6 +202,23 @@ function vTasks(){const cols=[["todo","К выполнению","s-todo"],["doin
  h+='</div><div class="grid g3">'+cols.map(col=>'<div class="card"><h2>'+col[1]+'</h2>'+DB.tasks.filter(t=>t.status===col[0]).map(t=>'<div class="ent" style="margin-bottom:9px"><div class="nm" style="font-size:14px">'+esc(t.title)+'</div><div class="muted" style="margin-top:4px">→ '+esc(agName(t.assigneeId))+'</div><div class="bar"><i style="width:'+(t.progress||0)+'%"></i></div><div class="row" style="margin-top:8px"><span class="statusbadge '+col[2]+'">'+col[1]+'</span><span class="spacer"></span>'+(canManage()?'<button class="btn sec" data-adv="'+t.id+'">→ дальше</button><button class="del" data-delt="'+t.id+'">✕</button>':'')+'</div></div>').join("")+'</div>').join("")+'</div>';
  return h;}
 
+
+/* INTEGRATIONS */
+const INTEG=[
+ ["Коммуникации",[["Telegram","💬"],["WhatsApp","🟢"],["Email","✉️"]]],
+ ["Соцсети",[["Instagram","📸"],["TikTok","🎵"],["YouTube","▶️"]]],
+ ["AI · нейросети",[["Claude API","🧠"],["Генерация изображений","🎨"],["Голос STT/TTS","🎙️"]]],
+ ["Платежи · финтех",[["Bliss pay","💳"],["Stripe","🟣"],["PayPal","🅿️"]]],
+ ["CRM · данные",[["Twenty CRM","📇"],["База данных","🗄️"]]],
+ ["Хранилище · файлы",[["Google Drive","📁"],["MinIO / S3","🪣"]]],
+ ["Автоматизация",[["n8n","🔗"],["Календарь","📅"]]],
+ ["Недвижимость",[["Idealista","🏠"],["Fotocasa","🏡"]]],
+];
+function vInteg(){DB.integrations=DB.integrations||{};
+ let h='<div class="card"><div class="kana">繋</div><h2>Интеграции</h2><div class="muted">Подключай системы клана. Управление статусом — здесь; живой обмен данными включается с бэкендом (Sarex) и твоими API-ключами (по разрешению).</div></div>';
+ INTEG.forEach(function(grp){h+='<div class="card"><h2>'+grp[0]+'</h2><div class="grid g3">'+grp[1].map(function(it){var on=!!DB.integrations[it[0]];return '<div class="ent"><div class="row"><div class="av" style="border-color:'+(on?'var(--ok)':'var(--line)')+'">'+it[1]+'</div><div><div class="nm">'+it[0]+'</div><div class="rl" style="color:'+(on?'var(--ok)':'var(--mut)')+'">'+(on?'Подключено':'Не подключено')+'</div></div></div><div class="row" style="margin-top:10px">'+(canManage()?'<button class="btn '+(on?'dng':'pri')+'" data-int="'+it[0]+'">'+(on?'Отключить':'Подключить')+'</button>':'<span class="tag">'+(on?'вкл':'выкл')+'</span>')+'</div></div>';}).join("")+'</div></div>';});
+ return h;}
+
 /* DATA */
 function vData(){return '<div class="card"><div class="kana">蔵</div><h2>Данные и независимость</h2><div class="muted">Данные хранятся локально в браузере. Экспортируй для бэкапа/переноса.</div><div class="row" style="margin-top:12px"><button class="btn pri" id="exp">⬇ Экспорт JSON</button><button class="btn sec" id="impBtn">⬆ Импорт</button><button class="btn dng" id="reset">Сбросить всё</button></div><input id="impFile" type="file" accept="application/json" class="hidden"/></div>';}
 
@@ -225,6 +243,7 @@ function bind(){const q=s=>document.getElementById(s);
  if(q('asend'))q('asend').onclick=sendAnni;
  if(q('amsg'))q('amsg').addEventListener('keydown',e=>{if(e.key==='Enter')sendAnni()});
  if(q('mic')){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(SR){const rec=new SR();rec.lang='ru-RU';rec.interimResults=false;q('mic').onclick=()=>{try{waveOn=true;rec.start()}catch(e){}};rec.onresult=e=>{document.getElementById('amsg').value=e.results[0][0].transcript;waveOn=false;sendAnni()};rec.onend=()=>waveOn=false;}else q('mic').onclick=()=>{CHAT.push({r:"an",t:"Голосовой ввод недоступен в этом браузере — напишите текстом."});renderChat()}}
+ document.querySelectorAll('[data-int]').forEach(b=>b.onclick=()=>{DB.integrations=DB.integrations||{};const k=b.dataset.int;DB.integrations[k]=!DB.integrations[k];save();render()});
  if(q('exp'))q('exp').onclick=()=>{const b=new Blob([JSON.stringify(DB,null,2)],{type:"application/json"});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download="anni_clan_backup.json";a.click()};
  if(q('impBtn'))q('impBtn').onclick=()=>q('impFile').click();
  if(q('impFile'))q('impFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);d.session=DB.session;DB=d;save();render();alert('Импортировано.')}catch(x){alert('Файл не распознан')}};r.readAsText(f)};
